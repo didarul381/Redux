@@ -1,85 +1,102 @@
-//state - count:0
-//action - increment,decrrement,reset
+//date:09-01-2023
+//redux fetch data using redux-thunk
+
+const { default: axios } = require("axios");
+const { createStore,applyMiddleware } = require("redux");
+
+const thunk= require('redux-thunk').default;
+//api url - https://jsonplaceholder.typicode.com/todos
+//middleware-redux-thunk
+//axios api
+
+
+//constant
+const GET_TODOS_REQUEST="GET_TODOS_REQUEST";
+const GET_TODOS_SUCCESS="GET_TODOS_SUCCESS";
+const GET_TODOS_FAILED="GET_TODOS_FAILED";
+const API_URL="https://jsonplaceholder.typicode.com/todos";
+//state
+const intialTodosState={
+    todos:[],
+    isLoading:false,
+    error:null
+};
+
+//action
+
+const  getTodosRequest = ()=>{
+    return{
+        type:GET_TODOS_REQUEST,
+    };
+};
+const  getTodosSuccess = (todos)=>{
+    return{
+        type:GET_TODOS_SUCCESS,
+        payload:todos
+    };
+};
+const  getTodosFailed = (error)=>{
+    return{
+        type:GET_TODOS_FAILED,
+        payload:error
+    };
+};
 //reducer
-//store
+const todosReducer = (state=intialTodosState,action) =>{
+  
+    switch (action.type) {
+        case GET_TODOS_REQUEST:
+            
+           return{
+            ...state,
+             isLoading:true,
 
-const { createStore } = require("redux");
+           };
+           case GET_TODOS_SUCCESS:
+            
+           return{
+            ...state,
+             isLoading:false,
+             todos:action.payload
 
-const  INCREMENT='INCREMENT'
-const DECREMENT='DECREMENT'
-const RESET='RESET'
-const ADD_USER='ADD_USER'
-const initialState  = {
-    users:["sakib"],
-    count:1
-}
+           };
+           case GET_TODOS_FAILED:
+            
+           return{
+            ...state,
+             isLoading:false,
+             error:action.payload
+             
 
-const addUser=(user)=>{
-    return{
-        type:ADD_USER,
-        payload:user
-    }
-}
-const incrementAction = ()=>{
-    return{
-        type: INCREMENT,
-    }
-
+           };
     
-};
-
-const decrementAction = ()=>{
-    return{
-        type: DECREMENT,
-    }
-
-    
-};
-const recrementAction = ()=>{
-    return{
-        type: RESET,
-    }
-
-    
-}
-//createing Reducer
-const counterReducer= (state=initialState,action)=>{
-switch(action.type){
-    case  ADD_USER:
-            return{
-              users:[...state.users,action.payload],
-                count:state.count + 1
-            }
-    case  INCREMENT:
-            return{
-                ...state,
-                count:state.count+1
-            }
-            case  DECREMENT:
-            return{
-                ...state,
-                count:state.count-1
-            }
-            case  RESET:
-                return{
-                    ...state,
-                    count:0
-                }
-      
         default:
-           state
-
-
+           return state;
+    }
 }
+//async acton
+ const fetchData = () =>{
 
-}
-// store
+    return (dispatch)=>{
+        dispatch(getTodosRequest());
+        axios.get(API_URL)
+        .then(res=>{
+           
+            const todos= res.data;
+            const titles=todos.map(todo=>todo.title);
+            dispatch( getTodosSuccess(titles));
+        })
+        .catch(error=>{
+          const  errorMessage =  console.log(error.message);
+          dispatch(getTodosFailed(errorMessage));
+        })
 
-const store = createStore(counterReducer);
-
+    }
+ }
+//store
+const store=createStore(todosReducer,applyMiddleware(thunk));
 store.subscribe(()=>{
+    console.log(store.getState());
+});
 
-console.log(store.getState())
-})
-store.dispatch( addUser("Didarul"));
-//store.dispatch(incrementAction());
+store.dispatch(fetchData())
